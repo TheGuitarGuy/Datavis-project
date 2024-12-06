@@ -208,7 +208,6 @@ body, html {
     background-color: #212330; /* match the dashboard theme */
 }
 
-/* New styles for anotherChart layout */
 #anotherChart {
     display: flex;
     flex-direction: column;
@@ -223,23 +222,36 @@ body, html {
 }
 
 .top-charts .chart-container {
-    flex: 1; /* Each chart takes equal space */
-    height: 300px; /* Adjust height as needed */
+    flex: 1; 
+    height: 300px; 
 }
 
 .map-section {
     display: flex;
     justify-content: center;
     width: 100%;
-    flex-grow: 1; /* Allow map-section to take remaining vertical space */
+    flex-grow: 1; 
 }
 
 .map-section .map-chart {
     width: 100%;
-    height: 800px; /* Twice the height of the small charts */
+    height: 800px; 
 }
 
-/* Responsive Adjustments */
+.chart-container .label {
+    font-size: 24px;
+    margin-bottom: 20px;
+    color: #ffffff; 
+}
+
+.chart-container#acknowledgements p {
+    font-size: 16px;
+    line-height: 1.6;
+    color: #f0f0f0; 
+    margin-bottom: 15px;
+}
+
+
 @media (max-width: 1200px) {
     .top-charts {
         flex-direction: column;

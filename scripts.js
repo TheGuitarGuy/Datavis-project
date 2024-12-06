@@ -38,30 +38,31 @@ function showChart(chartId) {
     });
 
     if (chartId === 'salesTrendChart') {
-        // Show the first tab's container
+        // Show the Sales Trends container
         targetChart.classList.add('visible');
         // Ensure roadmap chart is drawn
         drawRoadmapChart(window.salesData);
+        // Trigger bottom charts animation
+        triggerBottomChartsAnimation();
     } else if (chartId === 'anotherChart') {
+        // Show the Another Chart container
+        targetChart.classList.add('visible');
         drawCustomerAgePieChart();
         drawCustomerPurchaseBarChart();
-
-        // Draw the map (updated)
         drawMap();
 
-        // Add .visible classes after drawing the charts and map
-        targetChart.classList.add('visible');
+        // Add .visible classes to inner containers
         document.getElementById('customerPieChart').classList.add('visible');
         document.getElementById('customerBarChart').classList.add('visible');
         document.getElementById('mapContainer').classList.add('visible');
-    }
-    
-
-    // Trigger bottom charts animation if applicable
-    if (chartId === 'salesTrendChart') {
-        triggerBottomChartsAnimation();
+    } else if (chartId === 'acknowledgements') {
+        // Show the Acknowledgments container
+        targetChart.classList.add('visible');
+        // If no additional actions are needed for acknowledgments, nothing else is required here
     }
 }
+
+
 
 // Updated map drawing function with sales visualization
 function drawMap() {
@@ -534,7 +535,7 @@ function drawRoadmapChart(data) {
         .text(d => d);
 }
 
-// Function to draw the Customer Age Distribution Pie Chart
+// Function to draw the Customer Age Distribution Pie Charta
 function drawCustomerAgePieChart() {
     // Remove any existing SVG
     d3.select('#customerPieChart').selectAll('svg').remove();

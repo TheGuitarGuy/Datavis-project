@@ -14,12 +14,13 @@
         <img id="productImage" src="images/walmart_logo.png" alt="Walmart Logo">
         <h2>Quick Access</h2>
         <button class="sidebar-button active" data-chart="salesTrendChart">Sales Trends</button>
-        <button class="sidebar-button" data-chart="anotherChart">Customer Trends</button>
+        <!-- <button class="sidebar-button" data-chart="anotherChart">Customer Trends</button> -->
+        <button class="sidebar-button" data-chart="acknowledgements">Acknowledgments</button>
     </div>
 
     <div class="content">
+        <!-- Sales Trends Chart -->
         <div id="salesTrendChart" class="chart-container visible">
-            <!-- Existing Sales Trend Content -->
             <div id="roadmapChart" class="chart-container visible">
                 <div class="label">Quarterly Sales Roadmap</div>
                 <div class="checkbox-group" id="productSelector">
@@ -42,30 +43,34 @@
             </div>
         </div>
 
+
         <div id="anotherChart" class="chart-container">
-            <!-- Top Row: Two Charts Side by Side -->
-            <div class="top-charts">
-                <div id="customerPieChart" class="chart-container small-chart">
-                    <div class="label">Customer Age Distribution</div>
-                    <!-- Pie Chart will be rendered here -->
-                </div>
-                <div id="customerBarChart" class="chart-container small-chart">
-                    <div class="label">Customer Purchase Frequency</div>
-                    <!-- Bar Chart will be rendered here -->
-                </div>
+
+            <div id="customerBarChart" class="chart-container">
+                <div class="label">Customer Purchase Frequency</div>
+         
             </div>
 
-            <!-- Bottom Section: Map -->
-            <div class="map-section">
-                <div id="mapContainer" class="chart-container map-chart">
-                    <div class="label">Geographic Distribution</div>
-                    <!-- Map will be rendered here -->
-                </div>
+            <div id="dealSizeBarChart" class="chart-container">
+                <div class="label">Sales by Deal Size</div>
             </div>
+
+
+            <div id="mapContainer" class="chart-container">
+                <div class="label">Sales by Country</div>
+       
+            </div>
+        </div>
+
+        <div id="acknowledgements" class="chart-container">
+            <div class="label">Acknowledgments</div>
+            <p>Kennion Gubler</p>
+            <p>Huge thank you to this dataset for offering wide breadth data that was fun to examine! https://www.kaggle.com/datasets/kyanyoga/sample-sales-data </p>
         </div>
     </div>
 
     <div class="tooltip" id="tooltip"></div>
+
     <script src="scripts.js"></script>
 </body>
 </html>
