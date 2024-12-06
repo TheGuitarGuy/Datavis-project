@@ -1,0 +1,458 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <!-- Meta tags and styles -->
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Customer Trends - Walmart Data Dashboard</title>
+    <!-- D3.js Library -->
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+    <style>
+        body, html {
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            margin: 0;
+            font-family: Arial, sans-serif;
+            background-color: #171923; /* Dark background */
+            color: #ffffff; /* Light text */
+            height: 100vh;
+            overflow: auto; /* Allow scrolling for overflow content */
+            position: relative; /* For tooltip positioning */
+        }
+
+        .sidebar {
+            width: 20vw;
+            min-width: 200px;
+            height: 100vh;
+            padding: 20px;
+            background-color: #171923; /* Dark sidebar */
+            color: #ffffff;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            border-right: 1px solid #333; /* Subtle border for separation */
+        }
+
+        .sidebar img {
+            width: 120px;
+            margin-bottom: 20px;
+        }
+
+        .sidebar h2 {
+            margin: 0;
+            font-size: 1.2em;
+            margin-bottom: 20px;
+            color: #cccccc; /* Slightly muted text for headings */
+        }
+
+        .sidebar button {
+            display: flex;
+            align-items: center;
+            width: 100%;
+            margin: 8px 0;
+            padding: 10px;
+            font-size: 1em;
+            color: #ffffff;
+            background-color: #171923;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s, border-left 0.3s;
+        }
+
+        .sidebar button:hover {
+            background-color: #303343; /* Highlight color for hover */
+        }
+
+        .sidebar button.active {
+            background-color: #1abc9c; /* Active button background */
+            color: #ffffff;            /* Active button text color */
+            border-left: 4px solid #16a085; /* Active button left border */
+        }
+
+        .content {
+            flex-grow: 1;
+            padding: 20px;
+            overflow-y: auto;
+            width: 80vw;
+            min-width: 600px;
+            height: calc(100vh - 40px);
+        }
+
+        /* Tooltip styling */
+        .tooltip {
+            position: absolute;
+            text-align: center;
+            padding: 8px;
+            font-size: 12px;
+            background: rgba(0, 0, 0, 0.7);
+            color: #ffffff;
+            border-radius: 4px;
+            pointer-events: none;
+            opacity: 0;
+            transition: opacity 0.3s;
+            z-index: 10;
+        }
+
+        /* Styles for Customer Trends Chart */
+        #customerTrendsChart {
+            width: 100%;
+            height: 400px;
+            margin-bottom: 40px; /* Space between charts */
+        }
+
+        /* Styles for Additional Customer Chart */
+        #customerFrequencyChart {
+            width: 100%;
+            height: 400px;
+        }
+
+        /* Axis label styles */
+        .axis-label {
+            font-size: 14px;
+            fill: #ffffff;
+        }
+
+        /* Bar styles */
+        .bar {
+            /* Colors will be assigned dynamically */
+        }
+
+        .bar:hover {
+            opacity: 0.8;
+        }
+
+    </style>
+</head>
+<body>
+    <div class="sidebar">
+        <img id="productImage" src="walmart_logo.png" alt="Walmart Logo">
+        <h2>Quick Access</h2>
+        <button class="sidebar-button" data-chart="salesTrendChart">Sales Trends</button>
+        <button class="sidebar-button active" data-chart="anotherChart">Customer Trends</button>
+        <!-- Removed Geographic Sales Map button -->
+        <!-- Add more buttons as needed -->
+    </div>
+
+    <div class="content">
+        <div id="salesTrendChart" class="chart-container" style="display: none;">
+            <!-- Sales Trend Chart Content (Hidden) -->
+            <div id="roadmapChart" class="chart-container">
+                <div class="label">Quarterly Sales Roadmap</div>
+                <div class="checkbox-group" id="productSelector">
+                    <label><input type="checkbox" value="Motorcycles" onchange="updateCharts()"> Motorcycles</label>
+                    <label><input type="checkbox" value="Classic Cars" onchange="updateCharts()"> Classic Cars</label>
+                    <label><input type="checkbox" value="Trucks and Buses" onchange="updateCharts()"> Trucks and Buses</label>
+                    <label><input type="checkbox" value="Vintage Cars" onchange="updateCharts()"> Vintage Cars</label>
+                    <label><input type="checkbox" value="Planes" onchange="updateCharts()"> Planes</label>
+                    <label><input type="checkbox" value="Ships" onchange="updateCharts()"> Ships</label>
+                    <label><input type="checkbox" value="Trains" onchange="updateCharts()"> Trains</label>
+                </div>
+            </div>
+            <div class="bottom-charts" id="bottomCharts">
+                <div id="donutChart" class="chart-container">
+                    <div class="label">Sales by Product Line</div>
+                </div>
+                <div id="stackedBarChart" class="chart-container">
+                    <div class="label">Monthly Sales by Product Line</div>
+                </div>
+            </div>
+        </div>
+
+        <div id="anotherChart" class="chart-container visible">
+            <!-- Customer Trends Chart Content -->
+            <div class="label">Customer Trends</div>
+            <div id="customerTrendsChart"></div>
+            <!-- Additional Chart Underneath -->
+            <div class="label">Customer Purchase Frequency</div>
+            <div id="customerFrequencyChart"></div>
+        </div>
+
+        <!-- Add more chart containers as needed -->
+    </div>
+
+    <!-- Tooltip Div -->
+    <div class="tooltip" id="tooltip"></div>
+
+    <script>
+        // Tooltip element
+        const tooltip = d3.select('#tooltip');
+
+        // Function to aggregate data by a specified key and value
+        function aggregateData(data, key, value) {
+            return d3.rollups(data, v => d3.sum(v, d => +d[value]), d => d[key]);
+        }
+
+        // Function to show the selected chart and update active button
+        function showChart(chartId) {
+            // Hide all chart containers and remove 'visible' class
+            const chartContainers = document.querySelectorAll('.content > div');
+            chartContainers.forEach(container => {
+                container.style.display = 'none';
+                container.classList.remove('visible');
+            });
+
+            // Show the selected chart container and add 'visible' class
+            const selectedContainer = document.getElementById(chartId);
+            selectedContainer.style.display = 'block';
+            selectedContainer.classList.add('visible');
+
+            // Manage active class for sidebar buttons
+            const sidebarButtons = document.querySelectorAll('.sidebar-button');
+            sidebarButtons.forEach(button => {
+                const isActive = button.getAttribute('data-chart') === chartId;
+                button.classList.toggle('active', isActive);
+                button.setAttribute('aria-pressed', isActive);
+            });
+
+            // Draw the chart based on chartId
+            if (chartId === 'salesTrendChart') {
+                // Hide Customer Trends Charts
+                // Not necessary here since only one chart is visible
+            } else if (chartId === 'anotherChart') {
+                // Draw Customer Trends Chart
+                drawCustomerTrendsChart();
+                // Draw Additional Customer Chart
+                drawCustomerFrequencyChart();
+            }
+            // Add other chart drawing conditions here
+        }
+
+        // Function to draw the Customer Trends Bar Chart with tooltips and different colors
+        function drawCustomerTrendsChart() {
+            // Sample customer trends data
+            const customerTrendsData = [
+                { category: 'Age 18-24', count: 120 },
+                { category: 'Age 25-34', count: 200 },
+                { category: 'Age 35-44', count: 150 },
+                { category: 'Age 45-54', count: 100 },
+                { category: 'Age 55+', count: 80 }
+            ];
+
+            const margin = { top: 40, right: 30, bottom: 60, left: 60 };
+            const width = 600 - margin.left - margin.right;
+            const height = 400 - margin.top - margin.bottom;
+
+            // Remove existing chart if any
+            d3.select('#customerTrendsChart').selectAll('svg').remove();
+
+            // Append SVG element
+            const svg = d3.select('#customerTrendsChart')
+                .append('svg')
+                .attr('width', '100%')
+                .attr('height', '100%')
+                .attr('viewBox', `0 0 ${width + margin.left + margin.right} ${height + margin.top + margin.bottom}`)
+                .append('g')
+                .attr('transform', `translate(${margin.left}, ${margin.top})`);
+
+            // Define scales
+            const x = d3.scaleBand()
+                .domain(customerTrendsData.map(d => d.category))
+                .range([0, width])
+                .padding(0.2);
+
+            const y = d3.scaleLinear()
+                .domain([0, d3.max(customerTrendsData, d => d.count) * 1.1])
+                .range([height, 0]);
+
+            // Define color scale with distinct colors
+            const color = d3.scaleOrdinal()
+                .domain(customerTrendsData.map(d => d.category))
+                .range(d3.schemeSet2);
+
+            // Add X axis
+            svg.append('g')
+                .attr('transform', `translate(0, ${height})`)
+                .call(d3.axisBottom(x))
+                .selectAll("text")
+                .style("fill", "#ffffff")
+                .style("font-size", "12px");
+
+            // Add Y axis
+            svg.append('g')
+                .call(d3.axisLeft(y))
+                .selectAll("text")
+                .style("fill", "#ffffff")
+                .style("font-size", "12px");
+
+            // Add Y axis label
+            svg.append("text")
+                .attr("transform", "rotate(-90)")
+                .attr("y", -margin.left + 15)
+                .attr("x", -height / 2)
+                .attr("dy", "1em")
+                .style("text-anchor", "middle")
+                .style("fill", "#ffffff")
+                .style("font-size", "14px")
+                .text("Number of Customers");
+
+            // Add X axis label
+            svg.append("text")
+                .attr("transform", `translate(${width / 2}, ${height + margin.bottom - 10})`)
+                .style("text-anchor", "middle")
+                .style("fill", "#ffffff")
+                .style("font-size", "14px")
+                .text("Age Groups");
+
+            // Create bars
+            svg.selectAll(".bar")
+                .data(customerTrendsData)
+                .enter().append("rect")
+                .attr("class", "bar")
+                .attr("x", d => x(d.category))
+                .attr("width", x.bandwidth())
+                .attr("y", d => y(0))
+                .attr("height", 0)
+                .attr("fill", d => color(d.category))
+                .on('mouseover', (event, d) => {
+                    tooltip.style('opacity', 1)
+                           .html(`<strong>${d.category}</strong><br/>Customers: ${d.count}`)
+                           .style('left', (event.pageX + 10) + 'px')
+                           .style('top', (event.pageY - 28) + 'px');
+                })
+                .on('mousemove', (event) => {
+                    tooltip.style('left', (event.pageX + 10) + 'px')
+                           .style('top', (event.pageY - 28) + 'px');
+                })
+                .on('mouseout', () => {
+                    tooltip.style('opacity', 0);
+                })
+                .transition()
+                .duration(1000)
+                .attr("y", d => y(d.count))
+                .attr("height", d => height - y(d.count))
+                .delay((d, i) => i * 100); // Staggered animation
+
+            // Add legend (optional, since colors are distinct per category)
+            // You can skip adding a legend if each bar has a label directly under it
+        }
+
+        // Function to draw the Customer Purchase Frequency Bar Chart with tooltips and different colors
+        function drawCustomerFrequencyChart() {
+            // Sample customer purchase frequency data
+            const customerFrequencyData = [
+                { category: '1-2 Purchases', count: 150 },
+                { category: '3-5 Purchases', count: 300 },
+                { category: '6-10 Purchases', count: 220 },
+                { category: '11-20 Purchases', count: 100 },
+                { category: '21+ Purchases', count: 50 }
+            ];
+
+            const margin = { top: 40, right: 30, bottom: 60, left: 60 };
+            const width = 600 - margin.left - margin.right;
+            const height = 400 - margin.top - margin.bottom;
+
+            // Remove existing chart if any
+            d3.select('#customerFrequencyChart').selectAll('svg').remove();
+
+            // Append SVG element
+            const svg = d3.select('#customerFrequencyChart')
+                .append('svg')
+                .attr('width', '100%')
+                .attr('height', '100%')
+                .attr('viewBox', `0 0 ${width + margin.left + margin.right} ${height + margin.top + margin.bottom}`)
+                .append('g')
+                .attr('transform', `translate(${margin.left}, ${margin.top})`);
+
+            // Define scales
+            const x = d3.scaleBand()
+                .domain(customerFrequencyData.map(d => d.category))
+                .range([0, width])
+                .padding(0.2);
+
+            const y = d3.scaleLinear()
+                .domain([0, d3.max(customerFrequencyData, d => d.count) * 1.1])
+                .range([height, 0]);
+
+            // Define color scale with distinct colors
+            const color = d3.scaleOrdinal()
+                .domain(customerFrequencyData.map(d => d.category))
+                .range(d3.schemeSet2);
+
+            // Add X axis
+            svg.append('g')
+                .attr('transform', `translate(0, ${height})`)
+                .call(d3.axisBottom(x))
+                .selectAll("text")
+                .style("fill", "#ffffff")
+                .style("font-size", "12px");
+
+            // Add Y axis
+            svg.append('g')
+                .call(d3.axisLeft(y))
+                .selectAll("text")
+                .style("fill", "#ffffff")
+                .style("font-size", "12px");
+
+            // Add Y axis label
+            svg.append("text")
+                .attr("transform", "rotate(-90)")
+                .attr("y", -margin.left + 15)
+                .attr("x", -height / 2)
+                .attr("dy", "1em")
+                .style("text-anchor", "middle")
+                .style("fill", "#ffffff")
+                .style("font-size", "14px")
+                .text("Number of Customers");
+
+            // Add X axis label
+            svg.append("text")
+                .attr("transform", `translate(${width / 2}, ${height + margin.bottom - 10})`)
+                .style("text-anchor", "middle")
+                .style("fill", "#ffffff")
+                .style("font-size", "14px")
+                .text("Purchase Frequency");
+
+            // Create bars
+            svg.selectAll(".bar")
+                .data(customerFrequencyData)
+                .enter().append("rect")
+                .attr("class", "bar")
+                .attr("x", d => x(d.category))
+                .attr("width", x.bandwidth())
+                .attr("y", d => y(0))
+                .attr("height", 0)
+                .attr("fill", d => color(d.category))
+                .on('mouseover', (event, d) => {
+                    tooltip.style('opacity', 1)
+                           .html(`<strong>${d.category}</strong><br/>Customers: ${d.count}`)
+                           .style('left', (event.pageX + 10) + 'px')
+                           .style('top', (event.pageY - 28) + 'px');
+                })
+                .on('mousemove', (event) => {
+                    tooltip.style('left', (event.pageX + 10) + 'px')
+                           .style('top', (event.pageY - 28) + 'px');
+                })
+                .on('mouseout', () => {
+                    tooltip.style('opacity', 0);
+                })
+                .transition()
+                .duration(1000)
+                .attr("y", d => y(d.count))
+                .attr("height", d => height - y(d.count))
+                .delay((d, i) => i * 100); // Staggered animation
+
+            // Add legend (optional)
+            // You can skip adding a legend if each bar has a label directly under it
+        }
+
+        // Initialize the display by showing the active chart on page load
+        document.addEventListener('DOMContentLoaded', () => {
+            const activeButton = document.querySelector('.sidebar-button.active');
+            if (activeButton) {
+                const chartId = activeButton.getAttribute('data-chart');
+                showChart(chartId);
+            }
+        });
+
+        // Ensure that clicking on the sidebar buttons loads the corresponding chart
+        document.querySelectorAll('.sidebar-button').forEach(button => {
+            button.addEventListener('click', function() {
+                const chartId = this.getAttribute('data-chart');
+                showChart(chartId);
+            });
+        });
+    </script>
+</body>
+</html>

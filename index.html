@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <!-- Meta tags and styles -->
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Enhanced Walmart Data Dashboard</title>
+    <!-- D3.js Library -->
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="sidebar">
+        <img id="productImage" src="images/walmart_logo.png" alt="Walmart Logo">
+        <h2>Quick Access</h2>
+        <button class="sidebar-button active" data-chart="salesTrendChart">Sales Trends</button>
+        <button class="sidebar-button" data-chart="anotherChart">Customer Trends</button>
+    </div>
+
+    <div class="content">
+        <div id="salesTrendChart" class="chart-container visible">
+            <!-- Existing Sales Trend Content -->
+            <div id="roadmapChart" class="chart-container visible">
+                <div class="label">Quarterly Sales Roadmap</div>
+                <div class="checkbox-group" id="productSelector">
+                    <label><input type="checkbox" value="Motorcycles" onchange="updateCharts()" checked> Motorcycles</label>
+                    <label><input type="checkbox" value="Classic Cars" onchange="updateCharts()"> Classic Cars</label>
+                    <label><input type="checkbox" value="Trucks and Buses" onchange="updateCharts()"> Trucks and Buses</label>
+                    <label><input type="checkbox" value="Vintage Cars" onchange="updateCharts()"> Vintage Cars</label>
+                    <label><input type="checkbox" value="Planes" onchange="updateCharts()"> Planes</label>
+                    <label><input type="checkbox" value="Ships" onchange="updateCharts()"> Ships</label>
+                    <label><input type="checkbox" value="Trains" onchange="updateCharts()"> Trains</label>
+                </div>
+            </div>
+            <div class="bottom-charts" id="bottomCharts">
+                <div id="donutChart" class="chart-container">
+                    <div class="label">Overall Sales by Product Line</div>
+                </div>
+                <div id="stackedBarChart" class="chart-container">
+                    <div class="label">Monthly Sales by Product Line</div>
+                </div>
+            </div>
+        </div>
+
+        <div id="anotherChart" class="chart-container">
+            <!-- Top Row: Two Charts Side by Side -->
+            <div class="top-charts">
+                <div id="customerPieChart" class="chart-container small-chart">
+                    <div class="label">Customer Age Distribution</div>
+                    <!-- Pie Chart will be rendered here -->
+                </div>
+                <div id="customerBarChart" class="chart-container small-chart">
+                    <div class="label">Customer Purchase Frequency</div>
+                    <!-- Bar Chart will be rendered here -->
+                </div>
+            </div>
+
+            <!-- Bottom Section: Map -->
+            <div class="map-section">
+                <div id="mapContainer" class="chart-container map-chart">
+                    <div class="label">Geographic Distribution</div>
+                    <!-- Map will be rendered here -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="tooltip" id="tooltip"></div>
+    <script src="scripts.js"></script>
+</body>
+</html>
